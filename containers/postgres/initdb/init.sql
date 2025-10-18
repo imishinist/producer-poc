@@ -1,0 +1,14 @@
+
+CREATE TABLE IF NOT EXISTS members (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS real_estates (
+    id SERIAL PRIMARY KEY,
+    member_id INTEGER REFERENCES members(id),
+    address VARCHAR(255),
+    price NUMERIC,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
