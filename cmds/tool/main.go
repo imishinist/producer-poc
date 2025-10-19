@@ -75,41 +75,6 @@ func fetchMemberFeeds(ctx context.Context, db *sql.DB) ([]*model.MemberFeed, err
 	return feeds, nil
 }
 
-func modifyMember(ctx context.Context, db *sql.DB, m *model.Member) error {
-	tx, err := db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.ExecContext(ctx, "UPDATE members SET name=$1 WHERE id=$2", m.Name, m.ID)
-	if err != nil {
-		if rerr := tx.Rollback(); rerr != nil {
-			log.Printf("Error rolling back transaction: %v", rerr)
-		}
-
-		return err
-	}
-
-	_, err = tx.ExecContext(ctx, `
-INSERT INTO member_feed (member_id, last_txid, last_lsn, updated_at) VALUES ($1, pg_current_xact_id(), pg_current_wal_lsn(), now()) 
-ON CONFLICT (member_id) DO UPDATE 
-SET last_txid = GREATEST(member_feed.last_txid, EXCLUDED.last_txid),
-    last_lsn = GREATEST(member_feed.last_lsn, EXCLUDED.last_lsn),
-    updated_at = GREATEST(member_feed.updated_at, EXCLUDED.updated_at)`, m.ID)
-	if err != nil {
-		if rerr := tx.Rollback(); rerr != nil {
-			log.Printf("Error rolling back transaction: %v", rerr)
-		}
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return tx.Rollback()
-	}
-	return nil
-}
-
 func main() {
 	db, err := producer.Connect()
 	if err != nil {
@@ -130,7 +95,10 @@ func main() {
 	fmt.Println("--------------------------------------------------------------------------------------")
 	fmt.Println()
 
-	if err := modifyMember(ctx, db, &model.Member{ID: 1, Name: randString(16)}); err != nil {
+	m := &model.MemberWithFeed{
+		Member: &model.Member{ID: 1, Name: randString(16)},
+	}
+	if err := producer.UpdateMember(ctx, db, m); err != nil {
 		log.Fatalf("Error modifying member: %v", err)
 	}
 

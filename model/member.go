@@ -13,7 +13,7 @@ type Member struct {
 }
 
 func (m Member) String() string {
-	return fmt.Sprintf("%d~%q (%s)", m.ID, m.Name, m.CreatedAt.Format(time.RFC3339Nano))
+	return fmt.Sprintf("%05d~%q (%s)", m.ID, m.Name, m.CreatedAt.Format(time.RFC3339Nano))
 }
 
 type MemberFeed struct {
@@ -28,9 +28,9 @@ type MemberFeed struct {
 
 func (m MemberFeed) String() string {
 	if m.LastCommitted.Valid {
-		return fmt.Sprintf("%d @ [%d, %s, %s] (%s)", m.MemberID, m.LastTxID, m.LastCommitted.Time.Format(time.RFC3339Nano), m.LastLSN, m.UpdatedAt.Format(time.RFC3339Nano))
+		return fmt.Sprintf("%05d @ [%d, %s, %s] (%s)", m.MemberID, m.LastTxID, m.LastCommitted.Time.Format(time.RFC3339Nano), m.LastLSN, m.UpdatedAt.Format(time.RFC3339Nano))
 	}
-	return fmt.Sprintf("%d @ [%d, %s] (%s)", m.MemberID, m.LastTxID, m.LastLSN, m.UpdatedAt.Format(time.RFC3339Nano))
+	return fmt.Sprintf("%05d @ [%d, %s] (%s)", m.MemberID, m.LastTxID, m.LastLSN, m.UpdatedAt.Format(time.RFC3339Nano))
 }
 
 type MemberWithFeed struct {
