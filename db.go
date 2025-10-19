@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"math/rand"
 	"os"
 	"time"
 
@@ -69,6 +70,8 @@ func AddMember(ctx context.Context, db *sql.DB, m *model.MemberWithFeed) error {
 	}
 	m.Feed = feed
 
+	RandSleep(rand.Float64())
+
 	err = tx.Commit()
 	if err != nil {
 		if rerr := tx.Rollback(); rerr != nil {
@@ -102,6 +105,8 @@ func UpdateMember(ctx context.Context, db *sql.DB, m *model.MemberWithFeed) erro
 		return fmt.Errorf("error upserting member feed: %w", err)
 	}
 	m.Feed = feed
+
+	RandSleep(rand.Float64())
 
 	err = tx.Commit()
 	if err != nil {

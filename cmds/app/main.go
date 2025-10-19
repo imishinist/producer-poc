@@ -148,9 +148,12 @@ func (s *ScenarioRunner) update(ctx context.Context) error {
 
 func main() {
 	var (
-		interval time.Duration
+		concurrency = 4
+		interval    = 500 * time.Millisecond
+		jitter      = 20 * time.Millisecond
 	)
-	flag.DurationVar(&interval, "i", 500*time.Millisecond, "interval")
+	flag.IntVar(&concurrency, "c", concurrency, "concurrency")
+	flag.DurationVar(&interval, "i", interval, "interval")
 	flag.Parse()
 
 	runner := NewScenarioRunner(0.3)
@@ -175,16 +178,26 @@ func main() {
 	}
 	runner.Init(feeds...)
 
-	ticker := time.NewTicker(interval)
-	for {
-		if err := runner.Run(ctx); err != nil {
-			slog.Error("scenario run error", "error", err)
-		}
+	wg := new(sync.WaitGroup)
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ticker := time.NewTicker(interval)
 
-		select {
-		case <-ticker.C:
-		case <-ctx.Done():
-			return
-		}
+			for {
+				if err := runner.Run(ctx); err != nil {
+					slog.Error("scenario run error", "error", err)
+				}
+
+				select {
+				case <-ticker.C:
+					time.Sleep(time.Duration(rand.Int63n(int64(jitter))))
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
 	}
+	wg.Wait()
 }
