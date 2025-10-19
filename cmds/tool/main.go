@@ -6,30 +6,12 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"os"
 
+	"github.com/imishinist/producer"
 	_ "github.com/lib/pq"
 
 	"github.com/imishinist/producer/model"
 )
-
-var (
-	PG_USER     string
-	PG_PASSWORD string
-	PG_DATABASE string
-	PG_HOST     string
-	PG_PORT     = 5432
-)
-
-func init() {
-	PG_USER = os.Getenv("PGUSER")
-	PG_PASSWORD = os.Getenv("PGPASSWORD")
-	PG_DATABASE = os.Getenv("PGDATABASE")
-	PG_HOST = os.Getenv("PGHOST")
-	if port := os.Getenv("PGPORT"); port != "" {
-		fmt.Sscanf(port, "%d", &PG_PORT)
-	}
-}
 
 func randString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
@@ -129,18 +111,11 @@ SET last_txid = GREATEST(member_feed.last_txid, EXCLUDED.last_txid),
 }
 
 func main() {
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE)
-
-	db, err := sql.Open("postgres", connStr)
+	db, err := producer.Connect()
 	if err != nil {
-		log.Fatalf("Error opening database connection: %v", err)
+		log.Fatalf("Error connecting to producer: %v", err)
 	}
 	defer db.Close()
-
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Error connecting to the database: %v", err)
-	}
 
 	ctx := context.Background()
 
