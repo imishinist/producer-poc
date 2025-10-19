@@ -7,9 +7,9 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/imishinist/producer"
 	_ "github.com/lib/pq"
 
+	"github.com/imishinist/producer"
 	"github.com/imishinist/producer/model"
 )
 
