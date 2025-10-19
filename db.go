@@ -3,6 +3,7 @@ package producer
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -74,8 +75,10 @@ func AddMember(ctx context.Context, db *sql.DB, m *model.MemberWithFeed) error {
 
 	err = tx.Commit()
 	if err != nil {
-		if rerr := tx.Rollback(); rerr != nil {
-			slog.Error("failed to rollback transaction", "error", rerr)
+		if !errors.Is(err, context.Canceled) && errors.Is(err, context.DeadlineExceeded) {
+			if rerr := tx.Rollback(); rerr != nil {
+				slog.Error("failed to rollback transaction", "error", rerr)
+			}
 		}
 		return fmt.Errorf("error commit: %w", err)
 	}
@@ -110,9 +113,12 @@ func UpdateMember(ctx context.Context, db *sql.DB, m *model.MemberWithFeed) erro
 
 	err = tx.Commit()
 	if err != nil {
-		if rerr := tx.Rollback(); rerr != nil {
-			slog.Error("failed to rollback transaction", "error", rerr)
+		if !errors.Is(err, context.Canceled) && errors.Is(err, context.DeadlineExceeded) {
+			if rerr := tx.Rollback(); rerr != nil {
+				slog.Error("failed to rollback transaction", "error", rerr)
+			}
 		}
+
 		return fmt.Errorf("error commit: %w", err)
 	}
 	return nil

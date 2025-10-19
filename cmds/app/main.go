@@ -187,6 +187,9 @@ func main() {
 
 			for {
 				if err := runner.Run(ctx); err != nil {
+					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+						return
+					}
 					slog.Error("scenario run error", "error", err)
 				}
 
