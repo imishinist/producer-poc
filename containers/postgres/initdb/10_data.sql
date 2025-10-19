@@ -1,0 +1,1 @@
+INSERT INTO members (name, created_at) VALUES ('Taisuke', now());
